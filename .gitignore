@@ -4,3 +4,4 @@ dist/
 ttsAPI.exe
 ttsAPI
 bun.lock
+temp/

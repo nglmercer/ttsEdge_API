@@ -6,17 +6,20 @@ import { SpamCleaner, createCleaner, quickClean } from "./filters/spam-cleaner"
 import { ConfigurableReplacer } from './controllers/ConfigurableReplacer'
 import { removeEmotes } from "./filters/clean-emotes"
 import { processCompleteText } from './services/tts'
+import { filterManager, checkText, addItemsToBlacklist, removeItemsFromBlacklist, addItemsToWhitelist, removeItemsFromWhitelist }  from './filters/filters'
 import { cors } from 'hono/cors'
 import { emitter } from './Emitter'
 const app = new Hono()
-const configurableReplacer = new ConfigurableReplacer()
-
+const configurableReplacer = new ConfigurableReplacer();
+const myFilter = filterManager.createFilter();
+const filterId = myFilter.id;
+addItemsToBlacklist(filterId, ['palabra-prohibida-permanente']);
 app.use(cors({
   origin: '*',
 }))
 
 app.get('/', (c) => {
-  return c.text('Hello Hono!')
+  return c.text('OVERLAY: https://nglmercer.github.io/multistreamASTRO/widgets/localtts/')
 })
 
 // Messages API
@@ -73,17 +76,19 @@ app.delete('/messages', (c) => {
 app.post('/webhook', async (c) => {
   try {
     const body = await c.req.json()
+    const NoteventNames = ["server","join","leave","join","unknown"]
     const processedMessage = processIaResponse(body)
     const {user,msg} = contentTEXT(processedMessage)
-    if (!user&&!msg){
-      console.log(processedMessage)
-      return c.json({ error: 'Invalid JSON body',processedMessage }, 400);
-    }
     const cleanText = removeEmotes(configurableReplacer.replace("user msg",{user,msg,body}))
+    if (!user&&!msg|| NoteventNames.includes(body.eventName) || checkText(cleanText)?.isBlocked){
+      console.log("ignore",{user,msg},body.eventName)
+      return c.json({ data: 'Invalid JSON body',processedMessage }, 200);
+    }
+    console.log("{user,msg}",{user,msg})
     const cleaned = quickClean(cleanText)
     console.log("processedMessage",{
       cleaned
-    })
+    },body.eventName)
     emitter.emit('text',cleaned)
     return c.json({ ok: true, cleaned })
   } catch (e) {
