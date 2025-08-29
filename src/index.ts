@@ -13,6 +13,7 @@ const app = new Hono()
 const configurableReplacer = new ConfigurableReplacer();
 const myFilter = filterManager.createFilter();
 const filterId = myFilter.id;
+let lastMessage = ''
 addItemsToBlacklist(filterId, ['palabra-prohibida-permanente']);
 app.use(cors({
   origin: '*',
@@ -84,6 +85,11 @@ app.post('/webhook', async (c) => {
       console.log("ignore",{user,msg},body.eventName)
       return c.json({ data: 'Invalid JSON body',processedMessage }, 200);
     }
+    if (lastMessage === cleanText || lastMessage.toLowerCase() === cleanText.toLowerCase()) {
+      console.log("ignore",{user,msg},body.eventName)
+      return c.json({ data: 'Invalid JSON body',processedMessage }, 200);
+    }
+    lastMessage = cleanText
     console.log("{user,msg}",{user,msg})
     const cleaned = quickClean(cleanText)
     console.log("processedMessage",{
