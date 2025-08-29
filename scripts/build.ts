@@ -1,10 +1,13 @@
 import { build,type BuildConfig } from 'bun';
 import { join } from 'path';
+import { file } from 'bun';
+const PackageJson = file('./package.json');
+const {name,version} = JSON.parse(await PackageJson.text());
 // Build for multiple platforms
 const platforms = [
-  { target: "bun-windows-x64", outfile: "app-windows.exe" },
-  { target: "bun-linux-x64", outfile: "app-linux" },
-  { target: "bun-darwin-arm64", outfile: "app-macos" },
+  { target: "bun-windows-x64", outfile: `${name}-${version}-windows.exe` },
+  { target: "bun-linux-x64", outfile: `${name}-${version}-linux` },
+  { target: "bun-darwin-arm64", outfile: `${name}-${version}-macos` },
 ];
 const defaultconfig:BuildConfig = {
     entrypoints:[join(__dirname,'../src/index.ts')],
